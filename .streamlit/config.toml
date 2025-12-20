@@ -1,0 +1,10 @@
+[theme]
+primaryColor = "#FF4B4B"          # Brand color for buttons/sliders
+backgroundColor = "#0E1117"       # Main background
+secondaryBackgroundColor = "#262730" # Sidebar and widget background
+textColor = "#FAFAFA"             # Main text
+font = "sans serif"
+
+[server]
+headless = true
+enableCORS = false
