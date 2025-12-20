@@ -5,6 +5,23 @@ import io
 
 # --- 1. DASHBOARD CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Bird Sighting Analytics", page_icon="🦅")
+st.markdown("""
+    <style>
+    /* Change background of the main app */
+    .stApp {
+        background-color: #065E50; 
+    }
+    /* Change sidebar color */
+    [data-testid="stSidebar"] {
+        background-color: #682E2A;
+    }
+    /* Change text color globally */
+    html, body, [class*="css"]  {
+        color: #C9D1D9;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 def run_bird_dashboard(df):
     """
@@ -26,12 +43,32 @@ def run_bird_dashboard(df):
     min_conf = st.sidebar.slider("Minimum Confidence Score", 0.0, 1.0, 0.5, 0.01)
     
     # Species Selection
-    all_species = sorted(df['species'].unique())
-    selected_species = st.sidebar.multiselect(
-        "Select Bird Species", 
-        all_species, 
-        default=all_species[:5] if len(all_species) > 5 else all_species
-    )
+    # --- SIDEBAR: SPECIES FILTER WITH SELECT ALL/NONE ---
+    with st.sidebar:
+        st.header("Species Filter")
+        
+        # Get the unique species list
+        all_species = sorted(df['species'].unique().tolist())
+
+        # Create two columns for the buttons
+        col1, col2 = st.columns(2)
+        
+        # "Select All" Logic
+        if col1.button("Select All"):
+            st.session_state["selected_birds"] = all_species
+            
+        # "Clear All" Logic
+        if col2.button("Clear All"):
+            st.session_state["selected_birds"] = []
+
+        # The Multiselect Widget
+        # It looks for 'selected_birds' in session_state; if not there, defaults to all
+        selected_species = st.multiselect(
+            "Choose Species:",
+            options=all_species,
+            key="selected_birds",
+            default=all_species[:5] # Initial default when the app first loads
+        )
 
     # --- 4. GLOBAL FILTERING LOGIC ---
     mask = (df['confidence'] >= min_conf) & (df['species'].isin(selected_species))
