@@ -9,7 +9,7 @@ st.markdown("""
     <style>
     /* Change background of the main app */
     .stApp {
-        background-color: #065E50; 
+        background-color: #F7F7F1; 
     }
     /* Change sidebar color */
     [data-testid="stSidebar"] {
@@ -17,7 +17,7 @@ st.markdown("""
     }
     /* Change text color globally */
     html, body, [class*="css"]  {
-        color: #C9D1D9;
+        color: #071B0B;
     }
     </style>
     """, unsafe_allow_html=True)
