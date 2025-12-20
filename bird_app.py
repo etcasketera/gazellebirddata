@@ -13,7 +13,7 @@ st.markdown("""
     }
     /* Change sidebar color */
     [data-testid="stSidebar"] {
-        background-color: #682E2A;
+        background-color: #B07D70;
     }
     /* Change text color globally */
     html, body, [class*="css"]  {

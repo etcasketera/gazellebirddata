@@ -1,7 +1,7 @@
 [theme]
 primaryColor = "#41A84F"          # Brand color for buttons/sliders
 backgroundColor = "#F7F7F1"       # Main background
-secondaryBackgroundColor = "#262730" # Sidebar and widget background
+secondaryBackgroundColor = "#FDD3B3" # Sidebar and widget background
 textColor = "#1C2627"             # Main text
 font = "sans serif"
 
