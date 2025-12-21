@@ -164,11 +164,11 @@ def run_bird_dashboard(df):
         # Prepare HTML Chart Export (Trend Chart)
         if not filtered_df.empty:
             buffer = io.StringIO()
-            fig_trend.write_html(buffer, include_plotlyjs='cdn')
-            html_bytes = buffer.getvalue().encode()
+            # fig_trend.write_html(buffer, include_plotlyjs='cdn')
+            # html_bytes = buffer.getvalue().encode()
             
             st.download_button("📥 Download CSV Data", data=csv, file_name="bird_data.csv", mime="text/csv")
-            st.download_button("📊 Download Interactive Trend Chart (HTML)", data=html_bytes, file_name="bird_trend.html")
+            # st.download_button("📊 Download Interactive Trend Chart (HTML)", data=html_bytes, file_name="bird_trend.html")
         else:
             st.warning("Nothing to export.")
 
