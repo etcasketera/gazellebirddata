@@ -140,7 +140,6 @@ def run_bird_dashboard(df):
             )
             fig_gantt.update_layout(bargap = .3, xaxis_tickformat="%H:%M:%S")
             fig_gantt.update_traces(
-                marker_line_color='black', 
                 marker_line_width=1.5, 
                 opacity=0.9
             )
