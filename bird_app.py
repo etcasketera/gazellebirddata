@@ -134,19 +134,19 @@ def run_bird_dashboard(df):
                 title="Sighting Start and End Times",
                 opacity=1
             )
-            fig_gantt.update_yaxes(
-                showline=True, 
-                linewidth=2, 
-                linecolor='black',
-                autorange="reversed"
-            )
-            fig_gantt.update_layout(bargap = .3, xaxis_tickformat="%H:%M:%S")
-            fig_gantt.update_xaxes(
-                showline=True, 
-                linewidth=2, 
-                linecolor='black', 
-                gridcolor='rgba(0,0,0,0.1)'
-            )
+            # fig_gantt.update_yaxes(
+            #     showline=True, 
+            #     linewidth=2, 
+            #     linecolor='black',
+            #     autorange="reversed"
+            # )
+            # fig_gantt.update_layout(bargap = .3, xaxis_tickformat="%H:%M:%S")
+            # fig_gantt.update_xaxes(
+            #     showline=True, 
+            #     linewidth=2, 
+            #     linecolor='black', 
+            #     gridcolor='rgba(0,0,0,0.1)'
+            # )
             st.plotly_chart(fig_gantt, use_container_width=True)
         else:
             st.info("No data to display on timeline.")
