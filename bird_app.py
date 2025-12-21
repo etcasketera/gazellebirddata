@@ -129,7 +129,8 @@ def run_bird_dashboard(df):
         if not filtered_df.empty:
             fig_gantt = px.timeline(
                 filtered_df, x_start="start", x_end="end", y="species", 
-                color="species", template="plotly_white",
+                color="species", 
+                # template="plotly_white",
                 title="Sighting Start and End Times",
                 opacity=1
             )
