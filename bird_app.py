@@ -227,7 +227,7 @@ def run_bulk_analysis(files):
         st.balloons() # Fun visual cue when the "folder" is finished!
     df_detections = pd.DataFrame(all_results)
     df_detections.rename(columns={'common_name':'species', 'confidence':'confidence'}, inplace=True)
-    if not df.empty():
+    if not df_detections.empty:
         df_detections['timestamp_str'] = df_detections['File'].apply(timest)
         df_detections['duration'] = df_detections['end_time'] -  df_detections['start_time']
 
