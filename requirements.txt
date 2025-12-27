@@ -1,3 +1,6 @@
 pandas
 streamlit
 plotly
+birdnet
+birdnetlib
+librosa

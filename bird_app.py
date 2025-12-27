@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import io
+import tempfile
+import os
+import birdnetlib
+from birdnetlib import Recording
+from birdnetlib.analyzer import Analyzer
+
 
 # --- 1. DASHBOARD CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Bird Sighting Analytics", page_icon="🦅")
@@ -22,13 +28,33 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+def analyze_audio(analyzer, uploaded_file, lat=None, lon=None, date=None):
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+        temp_file.write(uploaded_file.getvalue())
+        temp_path = temp_file.name
+
+    recording = Recording(
+        analyzer,
+        temp_path,
+        lat=lat,
+        lon=lon,
+        date=date,
+        min_conf=.1
+    )
+
+    recording.analyze()
+
+    os.remove(temp_path)
+
+    return recording.detections
+
+def timest(row):
+    return row[:-4]
+
+
 
 def run_bird_dashboard(df):
-    """
-    Pass your dataframe into this function. 
-    Assumes columns: 'species', 'confidence', 'timestamp_str', 'duration'
-    Format of timestamp_str: 'YYYYMMDD_HHMMSS'
-    """
     
     # --- 2. DATA PROCESSING ---
     # Convert string timestamps to datetime objects
@@ -129,24 +155,27 @@ def run_bird_dashboard(df):
         if not filtered_df.empty:
             fig_gantt = px.timeline(
                 filtered_df, x_start="start", x_end="end", y="species", 
-                color="species", 
+                color='species', 
                 # template="plotly_white",
                 title="Sighting Start and End Times",
                 opacity=1
             )
-            # fig_gantt.update_yaxes(
-            #     showline=True, 
-            #     linewidth=2, 
-            #     linecolor='black',
-            #     autorange="reversed"
-            # )
+            fig_gantt.update_yaxes(
+                # showline=True, 
+                # linewidth=2, 
+                # linecolor='black',
+                ticklen=50
+                # tickwidth=3,
+                # ticks='outside'
+                # autorange="reversed"
+            )
             # fig_gantt.update_layout(bargap = .3, xaxis_tickformat="%H:%M:%S")
-            # fig_gantt.update_xaxes(
-            #     showline=True, 
-            #     linewidth=2, 
-            #     linecolor='black', 
-            #     gridcolor='rgba(0,0,0,0.1)'
-            # )
+            fig_gantt.update_xaxes(
+                # showline=True, 
+                # linewidth=2, 
+                # linecolor='black',
+                # ticklen=15
+            )
             st.plotly_chart(fig_gantt, use_container_width=True)
         else:
             st.info("No data to display on timeline.")
@@ -169,14 +198,43 @@ def run_bird_dashboard(df):
         else:
             st.warning("Nothing to export.")
 
-# --- EXAMPLE USAGE ---
-# If you are running this as a standalone script:
+@st.cache_resource
+def bird_model():
+    return Analyzer()
+
+@st.cache_data
+def run_bulk_analysis(files):
+    all_results = []
+    if files:
+        st.success(f"Successfully received {len(files)} files.")
+    
+    # Iterate through the uploaded files for BirdNET processing
+    if files:
+        progress_bar = st.progress(0)
+        for i, filename in enumerate(files):
+            # 1. Analyze file using birdnetlib
+            analyzer = bird_model()
+            records = analyze_audio(analyzer, filename)
+
+            for record in records:
+                record['File'] = filename.name
+                all_results.append(record)
+            
+            # 2. Update Progress
+            percent_complete = (i + 1) / len(files)
+            progress_bar.progress(percent_complete)
+            
+        st.balloons() # Fun visual cue when the "folder" is finished!
+    df_detections = pd.DataFrame(all_results)
+    df_detections.rename(columns={'common_name':'species', 'confidence':'confidence'}, inplace=True)
+    if not df.empty():
+        df_detections['timestamp_str'] = df_detections['File'].apply(timest)
+        df_detections['duration'] = df_detections['end_time'] -  df_detections['start_time']
+
+    return df_detections
+
 if __name__ == "__main__":
-    # Replace this with your actual data loading logic
-    # df = pd.read_csv("your_file.csv")
-    try:
-        # Check if sample data exists from previous steps
-        df_to_use = pd.read_csv("bird_data_temp.csv")
-        run_bird_dashboard(df_to_use)
-    except FileNotFoundError:
-        st.error("Please ensure your bird data CSV is in the same directory.")
+    st.title("AudioMoth Audio Analysis")
+    uploaded_files = st.file_uploader("Drop Audio File Here", type=["wav"], accept_multiple_files=True)
+    df = run_bulk_analysis(uploaded_files)
+    run_bird_dashboard(df)
