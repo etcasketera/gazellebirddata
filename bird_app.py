@@ -9,6 +9,9 @@ from birdnetlib import Recording
 from birdnetlib.analyzer import Analyzer
 import base64
 
+if 'df' not in st.session_state:
+    st.session_state.df = None
+
 def load_font(font_path):
     with open(font_path, "rb") as f:
         data = base64.b64encode(f.read()).decode()
@@ -99,9 +102,26 @@ def run_bird_dashboard(df):
             key="selected_birds",
             default=all_species[:5] # Initial default when the app first loads
         )
+        st.header("Date Range")
+        # 1. Get min and max dates from the dataframe
+        min_date = df['start'].min().date()
+        max_date = df['start'].max().date()
+
+        # 2. Create the date picker (returns a tuple of two dates)
+        selected_dates = st.date_input(
+            "Select Date Range",
+            value=(min_date, max_date),
+            min_value=min_date,
+            max_value=max_date
+        )
 
     # --- 4. GLOBAL FILTERING LOGIC ---
     mask = (df['confidence'] >= min_conf) & (df['species'].isin(selected_species))
+    if len(selected_dates) == 2:
+        start_date, end_date = selected_dates
+        date_mask = (df['start'].dt.date >= start_date) & (df['start'].dt.date <= end_date)
+        # Update your existing mask to include this
+        mask = mask & date_mask
     filtered_df = df[mask].copy()
 
     # --- 5. DASHBOARD HEADER & METRICS ---
@@ -118,11 +138,12 @@ def run_bird_dashboard(df):
         st.metric("Avg. Observation", f"{avg_dur:.1f}s")
 
     # --- 6. TABBED INTERFACE ---
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Species Volume", 
-        "📈 Minute-by-Minute", 
-        "⏱️ Behavior Timeline",
-        "📥 Export Report"
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Species Volume", 
+        "Minute-by-Minute", 
+        "Behavior Timeline",
+        "Confidence Heatmap",
+        "Export Report"
     ])
 
     # TAB 1: Bar Chart (Top 20)
@@ -183,9 +204,31 @@ def run_bird_dashboard(df):
             st.plotly_chart(fig_gantt, use_container_width=True)
         else:
             st.info("No data to display on timeline.")
-
-    # TAB 4: Export Options
+    # TAB 4: COnfidence Heatmap
     with tab4:
+        st.subheader("Confidence vs. Time of Day")
+    
+    if not filtered_df.empty:
+        # 1. Extract the hour from the timestamp
+        filtered_df['hour'] = filtered_df['start'].dt.hour
+        
+        # 2. Create the heatmap
+        fig_heat = px.density_heatmap(
+            filtered_df, 
+            x="hour", 
+            y="confidence", 
+            nbinsx=24, # One bin for every hour
+            nbinsy=10, # Divide confidence 0-1 into 10 slices
+            color_continuous_scale="Viridis",
+            labels={'hour': 'Hour of Day (24h)', 'confidence': 'Confidence Score'}
+        )
+        
+        # 3. Apply branding font to the chart
+        fig_heat.update_layout(font_family="Inter")
+        
+        st.plotly_chart(fig_heat, use_container_width=True)
+    # TAB 5: Export Options
+    with tab5:
         st.subheader("Download Research Data")
         
         # Prepare CSV
@@ -215,9 +258,10 @@ def run_bulk_analysis(files):
     # Iterate through the uploaded files for BirdNET processing
     if files:
         progress_bar = st.progress(0)
+        analyzer = bird_model()
         for i, filename in enumerate(files):
             # 1. Analyze file using birdnetlib
-            analyzer = bird_model()
+            
             records = analyze_audio(analyzer, filename)
 
             for record in records:
@@ -245,28 +289,46 @@ def get_files_analysis(folder_path):
     return uploaded_files
 
 if __name__ == "__main__":
-    st.title("AudioMoth Bird Detection Analysis")
-    folder_path = st.text_input('Input the path to your audio folder:','Right click folder name and select copy address')
+    
+    # 1. Branding Header (Use your base64 logic here)
+    st.title("🦅 AudioMoth Bird Detection Analysis")
+    
+    # 2. Input Section
+    folder_path = st.text_input('Input audio folder path:', placeholder='C:/Users/Documents/AudioData')
 
     if folder_path and os.path.exists(folder_path):
         results_path = os.path.join(folder_path, 'birdnet_results.csv')
-    if st.button("Start Bulk Analysis"):
-        if os.path.exists(results_path):
-                st.info("Found existing analysis file")
-                df = pd.read_csv(results_path)
-                st.success(f"Loaded {len(df)} detections from disk.")
-            else:
-                st.warning("No existing analysis found. Starting fresh")
-                # Run your heavy cached analysis
+        if os.path.exists(results_path) and st.session_state.df is None:
+            st.session_state.df = pd.read_csv(results_path)
+        # Check if we should load the data
+        if st.session_state.df is None:
+            col1, col2 = st.columns(2)
+            
+            # Scenario A: CSV exists - Give them a "Load" button
+            if os.path.exists(results_path):
+                if col1.button("📂 Load Existing Analysis"):
+                    st.session_state.df = pd.read_csv(results_path)
+                    st.rerun()
+            
+            # Scenario B: No CSV or they want to re-run
+            if col2.button("🚀 Start New Analysis"):
                 files = get_files_analysis(folder_path)
-                df = run_bulk_analysis(files)
-
-                if not df.empty:
-                    df.to_csv(results_path, index=False)
-                    st.success(f"Analysis complete and saved to {results_path}")
-
-            # Run the dashboard with the resulting dataframe
-            if not df.empty:
-                run_bird_dashboard(df)
+                if files:
+                    df_results = run_bulk_analysis(files)
+                    if not df_results.empty:
+                        df_results.to_csv(results_path, index=False)
+                        st.session_state.df = df_results
+                        st.rerun()
+                else:
+                    st.error("No .WAV files found in that folder.")
+        
+    # 3. Dashboard Display
+    if st.session_state.df is not None:
+        # Add a "Reset" button in the sidebar to clear state
+        if st.sidebar.button("🔄 Switch Project / Folder"):
+            st.session_state.df = None
+            st.rerun()
+            
+        run_bird_dashboard(st.session_state.df)
     else:
-        st.info("Please enter a valid folder path to begin.")
+        st.info("Please enter a folder path and load data to view the dashboard.")
