@@ -7,8 +7,14 @@ import os
 import birdnetlib
 from birdnetlib import Recording
 from birdnetlib.analyzer import Analyzer
+import base64
 
+def load_font(font_path):
+    with open(font_path, "rb") as f:
+        data = base64.b64encode(f.read()).decode()
+    return data
 
+st.image("gazelle_logo.png", width=200)
 # --- 1. DASHBOARD CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Bird Sighting Analytics", page_icon="🦅")
 st.markdown("""
@@ -20,23 +26,24 @@ st.markdown("""
     /* Change sidebar color */
     [data-testid="stSidebar"] {
         background-color: #B07D70;
+        border-right: 1px solid #30363D;
     }
-    /* Change text color globally */
-    html, body, [class*="css"]  {
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
         color: #071B0B;
     }
+    
     </style>
     """, unsafe_allow_html=True)
 
 def analyze_audio(analyzer, uploaded_file, lat=None, lon=None, date=None):
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-        temp_file.write(uploaded_file.getvalue())
-        temp_path = temp_file.name
-
     recording = Recording(
         analyzer,
-        temp_path,
+        uploaded_file,
         lat=lat,
         lon=lon,
         date=date,
@@ -44,9 +51,6 @@ def analyze_audio(analyzer, uploaded_file, lat=None, lon=None, date=None):
     )
 
     recording.analyze()
-
-    os.remove(temp_path)
-
     return recording.detections
 
 def timest(row):
@@ -217,14 +221,14 @@ def run_bulk_analysis(files):
             records = analyze_audio(analyzer, filename)
 
             for record in records:
-                record['File'] = filename.name
+                print(filename[-19:])
+                record['File'] = filename[-19:]
                 all_results.append(record)
             
             # 2. Update Progress
             percent_complete = (i + 1) / len(files)
             progress_bar.progress(percent_complete)
             
-        st.balloons() # Fun visual cue when the "folder" is finished!
     df_detections = pd.DataFrame(all_results)
     df_detections.rename(columns={'common_name':'species', 'confidence':'confidence'}, inplace=True)
     if not df_detections.empty:
@@ -234,7 +238,15 @@ def run_bulk_analysis(files):
     return df_detections
 
 if __name__ == "__main__":
-    st.title("AudioMoth Audio Analysis")
-    uploaded_files = st.file_uploader("Drop Audio File Here", type=["wav"], accept_multiple_files=True)
+    st.title("AudioMoth Bird Detection Analysis")
+    # uploaded_files = st.file_uploader("Drop Audio File Here", type=["wav"], accept_multiple_files=True)
+    folder_path = st.text_input('Input the path to your audio folder:','Right click folder name and select copy address')
+    uploaded_files = []
+    if st.button("Start Bulk Analysis"):
+        if os.path.exists(folder_path):
+            uploaded_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.WAV')]
+
+    print(uploaded_files)
     df = run_bulk_analysis(uploaded_files)
-    run_bird_dashboard(df)
+    if not df.empty:
+        run_bird_dashboard(df)
