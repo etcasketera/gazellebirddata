@@ -208,25 +208,25 @@ def run_bird_dashboard(df):
     with tab4:
         st.subheader("Confidence vs. Time of Day")
     
-    if not filtered_df.empty:
-        # 1. Extract the hour from the timestamp
-        filtered_df['hour'] = filtered_df['start'].dt.hour
-        
-        # 2. Create the heatmap
-        fig_heat = px.density_heatmap(
-            filtered_df, 
-            x="hour", 
-            y="confidence", 
-            nbinsx=24, # One bin for every hour
-            nbinsy=10, # Divide confidence 0-1 into 10 slices
-            color_continuous_scale="Viridis",
-            labels={'hour': 'Hour of Day (24h)', 'confidence': 'Confidence Score'}
-        )
-        
-        # 3. Apply branding font to the chart
-        fig_heat.update_layout(font_family="Inter")
-        
-        st.plotly_chart(fig_heat, use_container_width=True)
+        if not filtered_df.empty:
+            # 1. Extract the hour from the timestamp
+            filtered_df['hour'] = filtered_df['start'].dt.hour
+            
+            # 2. Create the heatmap
+            fig_heat = px.density_heatmap(
+                filtered_df, 
+                x="hour", 
+                y="confidence", 
+                nbinsx=24, # One bin for every hour
+                nbinsy=10, # Divide confidence 0-1 into 10 slices
+                color_continuous_scale="Viridis",
+                labels={'hour': 'Hour of Day (24h)', 'confidence': 'Confidence Score'}
+            )
+            
+            # 3. Apply branding font to the chart
+            fig_heat.update_layout(font_family="Inter")
+            
+            st.plotly_chart(fig_heat, use_container_width=True)
     # TAB 5: Export Options
     with tab5:
         st.subheader("Download Research Data")
