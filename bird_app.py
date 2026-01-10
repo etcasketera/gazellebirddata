@@ -247,7 +247,26 @@ def get_files_analysis(folder_path):
 if __name__ == "__main__":
     st.title("AudioMoth Bird Detection Analysis")
     folder_path = st.text_input('Input the path to your audio folder:','Right click folder name and select copy address')
+
+    if folder_path and os.path.exists(folder_path):
+        results_path = os.path.join(folder_path, 'birdnet_results.csv')
     if st.button("Start Bulk Analysis"):
-        df = run_bulk_analysis(get_files_analysis(folder_path))
-        if not df.empty:
-            run_bird_dashboard(df)
+        if os.path.exists(results_path):
+                st.info("Found existing analysis file")
+                df = pd.read_csv(results_path)
+                st.success(f"Loaded {len(df)} detections from disk.")
+            else:
+                st.warning("No existing analysis found. Starting fresh")
+                # Run your heavy cached analysis
+                files = get_files_analysis(folder_path)
+                df = run_bulk_analysis(files)
+
+                if not df.empty:
+                    df.to_csv(results_path, index=False)
+                    st.success(f"Analysis complete and saved to {results_path}")
+
+            # Run the dashboard with the resulting dataframe
+            if not df.empty:
+                run_bird_dashboard(df)
+    else:
+        st.info("Please enter a valid folder path to begin.")
