@@ -221,7 +221,6 @@ def run_bulk_analysis(files):
             records = analyze_audio(analyzer, filename)
 
             for record in records:
-                print(filename[-19:])
                 record['File'] = filename[-19:]
                 all_results.append(record)
             
@@ -237,16 +236,18 @@ def run_bulk_analysis(files):
 
     return df_detections
 
+@st.cache_data
+def get_files_analysis(folder_path):
+    uploaded_files = []
+    if os.path.exists(folder_path):
+        uploaded_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.WAV')]
+    
+    return uploaded_files
+
 if __name__ == "__main__":
     st.title("AudioMoth Bird Detection Analysis")
-    # uploaded_files = st.file_uploader("Drop Audio File Here", type=["wav"], accept_multiple_files=True)
     folder_path = st.text_input('Input the path to your audio folder:','Right click folder name and select copy address')
-    uploaded_files = []
     if st.button("Start Bulk Analysis"):
-        if os.path.exists(folder_path):
-            uploaded_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.WAV')]
-
-    print(uploaded_files)
-    df = run_bulk_analysis(uploaded_files)
-    if not df.empty:
-        run_bird_dashboard(df)
+        df = run_bulk_analysis(get_files_analysis(folder_path))
+        if not df.empty:
+            run_bird_dashboard(df)
