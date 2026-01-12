@@ -329,6 +329,6 @@ if __name__ == "__main__":
             st.session_state.df = None
             st.rerun()
             
-        run_bird_dashboard(st.session_state.df)
+        # run_bird_dashboard(st.session_state.df)
     else:
         st.info("Please enter a folder path and load data to view the dashboard.")
