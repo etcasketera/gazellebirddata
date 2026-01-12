@@ -326,7 +326,7 @@ if __name__ == "__main__":
     if st.session_state.df is not None:
         # Add a "Reset" button in the sidebar to clear state
         if st.sidebar.button("🔄 Switch Project / Folder"):
-            st.session_state.df = None
+            del st.session_state.df
             st.rerun()
             
         run_bird_dashboard(st.session_state.df)
