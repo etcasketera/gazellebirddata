@@ -325,7 +325,7 @@ if __name__ == "__main__":
     # 3. Dashboard Display
     if st.session_state.df is not None:
         # Add a "Reset" button in the sidebar to clear state
-        if st.sidebar.button("🔄 Switch Project / Folder"):
+        if st.sidebar.button("Reset Analysis"):
             del st.session_state.df
             st.rerun()
             
