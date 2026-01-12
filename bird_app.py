@@ -294,7 +294,7 @@ if __name__ == "__main__":
     st.title("🦅 AudioMoth Bird Detection Analysis")
     
     # 2. Input Section
-    folder_path = st.text_input('Input audio folder path:', placeholder='C:/Users/Documents/AudioData')
+    folder_path = st.text_input('Input audio folder path:', placeholder='./test_data')
 
     if folder_path and os.path.exists(folder_path):
         results_path = os.path.join(folder_path, 'birdnet_results.csv')
