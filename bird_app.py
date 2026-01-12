@@ -74,11 +74,6 @@ def run_bird_dashboard(df):
     
     # Confidence Slider
     min_conf = st.sidebar.slider("Minimum Confidence Score", 0.0, 1.0, 0.5, 0.01)
-
-    # Add a "Reset" button in the sidebar to clear state
-    if st.sidebar.button("🔄 Switch Project / Folder"):
-        st.session_state.df = None
-        st.rerun()
     
     # Species Selection
     # --- SIDEBAR: SPECIES FILTER WITH SELECT ALL/NONE ---
@@ -329,7 +324,10 @@ if __name__ == "__main__":
         
     # 3. Dashboard Display
     if st.session_state.df is not None:
-        
+        # Add a "Reset" button in the sidebar to clear state
+        if st.sidebar.button("🔄 Switch Project / Folder"):
+            st.session_state.df = None
+            st.rerun()
             
         run_bird_dashboard(st.session_state.df)
     else:
