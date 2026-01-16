@@ -10,3 +10,5 @@ headless = true
 enableCORS = false
 
 maxUploadSize = 1000
+
+enableStaticServing = true

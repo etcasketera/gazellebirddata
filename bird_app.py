@@ -17,6 +17,8 @@ def load_font(font_path):
         data = base64.b64encode(f.read()).decode()
     return data
 
+load_font('./Lagom-Grotesk-Regular.otf')
+
 st.image("gazelle_logo.png", width=200)
 # --- 1. DASHBOARD CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Bird Sighting Analytics", page_icon="🦅")
@@ -32,10 +34,14 @@ st.markdown("""
         border-right: 1px solid #30363D;
     }
 
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    @font-face {{
+            font-family: 'CompanyFont';
+            src: url(data:font/ttf;base64,{data}) format('truetype');
+        }}
+        * {{ font-family: 'CompanyFont', sans-serif !important; }}
 
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'CompanyFont', sans-serif;
         color: #071B0B;
     }
     
@@ -114,6 +120,10 @@ def run_bird_dashboard(df):
             min_value=min_date,
             max_value=max_date
         )
+        print_mode = st.sidebar.checkbox("Prepare for Print (Show all charts)")
+
+        
+
 
     # --- 4. GLOBAL FILTERING LOGIC ---
     mask = (df['confidence'] >= min_conf) & (df['species'].isin(selected_species))
@@ -138,112 +148,128 @@ def run_bird_dashboard(df):
         st.metric("Avg. Observation", f"{avg_dur:.1f}s")
 
     # --- 6. TABBED INTERFACE ---
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Species Volume", 
-        "Minute-by-Minute", 
-        "Behavior Timeline",
-        "Confidence Heatmap",
-        "Export Report"
-    ])
-
-    # TAB 1: Bar Chart (Top 20)
-    with tab1:
-        st.subheader("Top Species Counts")
-        top_20 = filtered_df['species'].value_counts().head(20).reset_index()
-        top_20.columns = ['Species', 'Count']
-        if not top_20.empty:
-            st.bar_chart(data=top_20, x='Species', y='Count', color="#2ca02c")
-        else:
-            st.info("Adjust filters to see data.")
-
-    # TAB 2: Activity Trend (Line Chart with 0-filling)
-    with tab2:
-        st.subheader("Sightings per Minute")
-        if not filtered_df.empty:
-            # Grouping and ensuring chronological order
-            minute_counts = filtered_df.groupby(['time_minute', 'species']).size().reset_index(name='sightings')
-            minute_counts = minute_counts.sort_values(by='time_minute')
-            fig_trend = px.line(
-                minute_counts, x="time_minute", y="sightings", color="species",
-                markers=True, template="plotly_white", line_shape="linear"
-            )
-            fig_trend.update_layout(xaxis_title="Time (HH:MM)", yaxis_title="Sightings")
-            fig_trend.update_xaxes(categoryorder='category ascending')
-            fig_trend.update_yaxes(dtick=1, tickformat="d")
-            st.plotly_chart(fig_trend, use_container_width=True)
-        else:
-            st.info("No data available for the selected filters.")
-
-    # TAB 3: Behavior Timeline (Gantt Chart)
-    with tab3:
-        st.subheader("Observation Durations")
-        if not filtered_df.empty:
-            fig_gantt = px.timeline(
-                filtered_df, x_start="start", x_end="end", y="species", 
-                color='species', 
-                # template="plotly_white",
-                title="Sighting Start and End Times",
-                opacity=1
-            )
-            fig_gantt.update_yaxes(
-                # showline=True, 
-                # linewidth=2, 
-                # linecolor='black',
-                ticklen=50
-                # tickwidth=3,
-                # ticks='outside'
-                # autorange="reversed"
-            )
-            # fig_gantt.update_layout(bargap = .3, xaxis_tickformat="%H:%M:%S")
-            fig_gantt.update_xaxes(
-                # showline=True, 
-                # linewidth=2, 
-                # linecolor='black',
-                # ticklen=15
-            )
-            st.plotly_chart(fig_gantt, use_container_width=True)
-        else:
-            st.info("No data to display on timeline.")
-    # TAB 4: COnfidence Heatmap
-    with tab4:
-        st.subheader("Confidence vs. Time of Day")
-    
-        if not filtered_df.empty:
-            # 1. Extract the hour from the timestamp
-            filtered_df['hour'] = filtered_df['start'].dt.hour
-            
-            # 2. Create the heatmap
-            fig_heat = px.density_heatmap(
-                filtered_df, 
-                x="hour", 
-                y="confidence", 
-                nbinsx=24, # One bin for every hour
-                nbinsy=10, # Divide confidence 0-1 into 10 slices
-                color_continuous_scale="Viridis",
-                labels={'hour': 'Hour of Day (24h)', 'confidence': 'Confidence Score'}
-            )
-            
-            # 3. Apply branding font to the chart
-            fig_heat.update_layout(font_family="Inter")
-            
-            st.plotly_chart(fig_heat, use_container_width=True)
-    # TAB 5: Export Options
-    with tab5:
-        st.subheader("Download Research Data")
+    if print_mode:
+        st.title("Full Research Report")
+        # st.plotly_chart(fig_volume)
+        st.plotly_chart(fig_trend)
+        st.plotly_chart(fig_gantt)
+        st.plotly_chart(fig_heat)
+    else:
         
-        # Prepare CSV
-        csv = filtered_df.to_csv(index=False).encode('utf-8')
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "Species Volume", 
+            "Minute-by-Minute", 
+            "Behavior Timeline",
+            "Confidence Heatmap",
+            "Export Report"
+        ])
+
+        # TAB 1: Bar Chart (Top 20)
+        with tab1:
+            st.subheader("Top Species Counts")
+            top_20 = filtered_df['species'].value_counts().head(20).reset_index()
+            top_20.columns = ['Species', 'Count']
+            if not top_20.empty:
+                st.bar_chart(data=top_20, x='Species', y='Count', color="#2ca02c")
+            else:
+                st.info("Adjust filters to see data.")
+
+        # TAB 2: Activity Trend (Line Chart with 0-filling)
+        with tab2:
+            st.subheader("Sightings per Minute")
+            if not filtered_df.empty:
+                # Grouping and ensuring chronological order
+                minute_counts = filtered_df.groupby(['time_minute', 'species']).size().reset_index(name='sightings')
+                minute_counts = minute_counts.sort_values(by='time_minute')
+                fig_trend = px.line(
+                    minute_counts, x="time_minute", y="sightings", color="species",
+                    markers=True, template="plotly_white", line_shape="linear"
+                )
+                fig_trend.update_layout(xaxis_title="Time (HH:MM)", yaxis_title="Sightings")
+                fig_trend.update_xaxes(categoryorder='category ascending')
+                fig_trend.update_yaxes(dtick=1, tickformat="d")
+                st.plotly_chart(fig_trend, use_container_width=True)
+            else:
+                st.info("No data available for the selected filters.")
+
+        # TAB 3: Behavior Timeline (Gantt Chart)
+        with tab3:
+            st.subheader("Observation Durations")
+            if not filtered_df.empty:
+                fig_gantt = px.timeline(
+                    filtered_df, x_start="start", x_end="end", y="species", 
+                    color='species', 
+                    # template="plotly_white",
+                    title="Sighting Start and End Times",
+                    opacity=1
+                )
+                fig_gantt.update_yaxes(
+                    # showline=True, 
+                    # linewidth=2, 
+                    # linecolor='black',
+                    ticklen=50
+                    # tickwidth=3,
+                    # ticks='outside'
+                    # autorange="reversed"
+                )
+                # fig_gantt.update_layout(bargap = .3, xaxis_tickformat="%H:%M:%S")
+                fig_gantt.update_xaxes(
+                    # showline=True, 
+                    # linewidth=2, 
+                    # linecolor='black',
+                    # ticklen=15
+                )
+                st.plotly_chart(fig_gantt, use_container_width=True)
+            else:
+                st.info("No data to display on timeline.")
+        # TAB 4: COnfidence Heatmap
+        with tab4:
+            st.subheader("Confidence vs. Time of Day")
         
-        # Prepare HTML Chart Export (Trend Chart)
-        if not filtered_df.empty:
-            buffer = io.StringIO()
-            # fig_trend.write_html(buffer, include_plotlyjs='cdn')
-            # html_bytes = buffer.getvalue().encode()
+            if not filtered_df.empty:
+                # 1. Extract the hour from the timestamp
+                filtered_df['hour'] = filtered_df['start'].dt.hour
+                
+                # 2. Create the heatmap
+                fig_heat = px.density_heatmap(
+                    filtered_df, 
+                    x="hour", 
+                    y="confidence", 
+                    nbinsx=24, # One bin for every hour
+                    nbinsy=10, # Divide confidence 0-1 into 10 slices
+                    color_continuous_scale="Viridis",
+                    labels={'hour': 'Hour of Day (24h)', 'confidence': 'Confidence Score'}
+                )
+                
+                # 3. Apply branding font to the chart
+                fig_heat.update_layout(font_family="CompanyFont")
+                
+                st.plotly_chart(fig_heat, use_container_width=True)
+        # TAB 5: Export Options
+        with tab5:
+            st.subheader("Download Research Data")
             
-            st.download_button("📥 Download CSV Data", data=csv, file_name="bird_data.csv", mime="text/csv")
-            # st.download_button("📊 Download Interactive Trend Chart (HTML)", data=html_bytes, file_name="bird_trend.html")
-        else:
-            st.warning("Nothing to export.")
+            # Prepare CSV
+            csv = filtered_df.to_csv(index=False).encode('utf-8')
+            
+            # Prepare HTML Chart Export (Trend Chart)
+            if not filtered_df.empty:
+                buffer = io.StringIO()
+                fig_trend.write_html(buffer, include_plotlyjs='cdn')
+                html_bytes = buffer.getvalue().encode()
+                
+                st.download_button("📥 Download CSV Data", data=csv, file_name="bird_data.csv", mime="text/csv")
+
+                st.download_button(
+                    label="📊 Download Interactive Trend Chart",
+                    data=html_bytes,
+                    file_name="bird_trend_interactive.html",
+                    mime="text/html"
+                )
+            else:
+                st.warning("Nothing to export.")
+
+        
 
 @st.cache_resource
 def bird_model():
