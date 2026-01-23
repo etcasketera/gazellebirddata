@@ -1,0 +1,24 @@
+2026-01-23 04:28:04.563
+Warning: the config option 'server.enableCORS=false' is not compatible with
+'server.enableXsrfProtection=true'.
+As a result, 'server.enableCORS' is being overridden to 'true'.
+
+More information:
+In order to protect against CSRF attacks, we send a cookie with each request.
+To do so, we must specify allowable origins, which places a restriction on
+cross-origin resource sharing.
+
+If cross origin resource sharing is required, please disable server.enableXsrfProtection.
+
+
+Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
+
+WARNING: Static file serving is enabled, but no static folder found at /app/static. To disable static file serving, set server.enableStaticServing to false.
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.0.2:8501
+  External URL: http://35.224.132.190:8501
+
+  Stopping...
