@@ -8,43 +8,189 @@ import birdnetlib
 from birdnetlib import Recording
 from birdnetlib.analyzer import Analyzer
 import base64
+from pygbif import species as species_api
+import numpy as np
+from itertools import combinations
+import sys
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 if 'df' not in st.session_state:
     st.session_state.df = None
 
+
+def calculate_pillar_1(df):
+    """Species Richness (Hill q=0)"""
+    return df['species'].nunique()
+
+def calculate_pillar_2(df):
+    """Species Diversity (Hill q=1) - Exponential of Shannon Index"""
+    counts = df['species'].value_counts()
+    probs = counts / counts.sum()
+    shannon_entropy = -np.sum(probs * np.log(probs))
+    return np.exp(shannon_entropy)
+
+def calculate_pillar_3_accurate(df):
+    """
+    Accurate Taxonomic Dissimilarity (Eq. 3 & 4) using GBIF data.
+    """
+    # unique_species = df['scientific+'].unique()
+    # non_bird_labels = ["Engine", "Wind", "Rain", "Human vocalization", "Noisedog"]
+
+    unique_sci = [s for s in df['scientific_name'].unique() if " " in str(s)]
+    
+    # 1. Build Taxonomy Map for all detected species
+    taxa_map = {}
+    for spec in unique_sci:
+        taxa_map[spec] = fetch_bird_taxonomy(spec)
+    
+    # 2. Distance function using the fetched data
+    def get_dist(s1, s2):
+        if s1 == s2: return 0
+        t1, t2 = taxa_map.get(s1), taxa_map.get(s2)
+        if not t1 or not t2: return 100
+        
+        if t1['genus'] == t2['genus']: return 20
+        if t1['family'] == t2['family']: return 40
+        if t1['order'] == t2['order']: return 60
+        return 100
+
+    # 3. Calculate Delta* (Eq. 3)
+    counts = df['scientific_name'].value_counts()
+    total_detections = counts.sum()
+    probs = {s: counts[s] / total_detections for s in unique_sci}
+    
+    numerator = 0
+    denominator = 0
+    
+    for s1, s2 in combinations(unique_sci, 2):
+        w_ij = get_dist(s1, s2)
+        p_i, p_j = probs[s1], probs[s2]
+        numerator += w_ij * p_i * p_j
+        denominator += p_i * p_j
+            
+    return numerator / denominator if denominator > 0 else 0.0
+
+def get_taxonomic_pair_distance(species_1, species_2):
+    """
+    Calculates the taxonomic distance between two species.
+    Based on standard ecological distance weights:
+    - Same Species: 0
+    - Same Genus: 20
+    - Same Family: 40
+    - Same Order: 60
+    - Different Order: 100
+    """
+    # 1. Fetch taxonomy for both species
+    taxa_1 = fetch_bird_taxonomy(species_1)
+    taxa_2 = fetch_bird_taxonomy(species_2)
+    
+    # 2. Check for exact match (same species)
+    if species_1 == species_2:
+        return 0
+    
+    # 3. Compare ranks from bottom to top
+    if taxa_1['genus'] == taxa_2['genus'] and taxa_1['genus'] != "Unknown":
+        return 20
+    if taxa_1['family'] == taxa_2['family'] and taxa_1['family'] != "Unknown":
+        return 40
+    if taxa_1['order'] == taxa_2['order'] and taxa_1['order'] != "Unknown":
+        return 60
+    
+    # 4. If they share no ranks below Class (Aves), return max distance
+    return 100
+
+def create_taxonomic_heatmap(df):
+    # 1. Identify unique species and their scientific names
+    # We create a mapping to ensure we use the correct names for API lookups
+    species_map = df[['species', 'scientific_name']].drop_duplicates().set_index('species')['scientific_name'].to_dict()
+    species_names = sorted(list(species_map.keys()))
+    n = len(species_names)
+    
+    if n == 0:
+        return None
+
+    # 2. Initialize an empty distance matrix
+    matrix = np.zeros((n, n))
+    
+    # 3. Fill the matrix
+    for i in range(n):
+        for j in range(i, n):  # Only calculate the upper triangle for efficiency
+            s1, s2 = species_names[i], species_names[j]
+            sci1, sci2 = species_map[s1], species_map[s2]
+            
+            # Use the distance logic we defined previously
+            dist = get_taxonomic_pair_distance(sci1, sci2)
+            
+            matrix[i, j] = dist
+            matrix[j, i] = dist  # Mirror the value across the diagonal
+
+    # 4. Create the Plotly Figure
+    fig = px.imshow(
+        matrix,
+        x=species_names,
+        y=species_names,
+        color_continuous_scale="Viridis_r", # Reversed Viridis (Darker = Closer)
+        labels=dict(x="Species A", y="Species B", color="Taxonomic Distance"),
+        title="Taxonomic Dissimilarity Matrix (Pillar 3 Components)",
+        text_auto=True # Shows the distance numbers inside the cells
+    )
+    
+    # Clean up the layout
+    fig.update_layout(
+        font_family="CompanyFont",
+        width=800,
+        height=800,
+        xaxis_side="top"
+    )
+    
+    return fig
+
 def load_font(font_path):
     with open(font_path, "rb") as f:
-        data = base64.b64encode(f.read()).decode()
-    return data
+        return base64.b64encode(f.read()).decode()
 
-load_font('./Lagom-Grotesk-Regular.otf')
 
-st.image("gazelle_logo.png", width=200)
+
+font_file = resource_path('fonts/Lagom-Grotesk-Regular.otf')
+font_data = load_font(font_file)
+
+st.image(resource_path("assets/gazelle_logo.png"), width=200)
 # --- 1. DASHBOARD CONFIGURATION ---
 st.set_page_config(layout="wide", page_title="Bird Sighting Analytics", page_icon="🦅")
-st.markdown("""
+st.markdown(f"""
     <style>
-    /* Change background of the main app */
-    .stApp {
+    @font-face {{
+        font-family: 'CompanyFont';
+        src: url(data:font/otf;base64,{font_data}) format('opentype');
+    }}
+
+    /* Apply to everything */
+    html, body, [class*="css"], stApp, * {{
+        font-family: 'CompanyFont', sans-serif !important;
+        color: #071B0B;
+    }}
+
+    .stApp {{
         background-color: #F7F7F1; 
-    }
-    /* Change sidebar color */
-    [data-testid="stSidebar"] {
+    }}
+
+    [data-testid="stSidebar"] {{
         background-color: #B07D70;
         border-right: 1px solid #30363D;
-    }
-
-    @font-face {{
-            font-family: 'CompanyFont';
-            src: url(data:font/ttf;base64,{data}) format('truetype');
-        }}
-        * {{ font-family: 'CompanyFont', sans-serif !important; }}
-
-    html, body, [class*="css"] {
-        font-family: 'CompanyFont', sans-serif;
-        color: #071B0B;
-    }
-    
+    }}
+    [data-testid="stExpander"] svg, 
+    [data-testid="stExpander"] [data-testid="stIcon"] {{
+        font-family: sans-serif !important;
+    }}
+    .st-emotion-cache-p966ps, .st-emotion-cache-1vt4y6f {{
+        font-family: 'Inter', sans-serif !important;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -149,12 +295,13 @@ def run_bird_dashboard(df):
 
     # --- 6. TABBED INTERFACE ---
         
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "Species Volume", 
         "Minute-by-Minute", 
         "Behavior Timeline",
         "Confidence Heatmap",
-        "Export Report"
+        "Export Report",
+        "Biodiversity Report"
     ])
 
     # TAB 1: Bar Chart (Top 20)
@@ -181,7 +328,7 @@ def run_bird_dashboard(df):
             fig_trend.update_layout(xaxis_title="Time (HH:MM)", yaxis_title="Sightings")
             fig_trend.update_xaxes(categoryorder='category ascending')
             fig_trend.update_yaxes(dtick=1, tickformat="d")
-            st.plotly_chart(fig_trend, use_container_width=True)
+            st.plotly_chart(fig_trend, width='stretch')
         else:
             st.info("No data available for the selected filters.")
 
@@ -212,7 +359,7 @@ def run_bird_dashboard(df):
                 # linecolor='black',
                 # ticklen=15
             )
-            st.plotly_chart(fig_gantt, use_container_width=True)
+            st.plotly_chart(fig_gantt, width='stretch')
         else:
             st.info("No data to display on timeline.")
     # TAB 4: COnfidence Heatmap
@@ -237,7 +384,7 @@ def run_bird_dashboard(df):
             # 3. Apply branding font to the chart
             fig_heat.update_layout(font_family="CompanyFont")
             
-            st.plotly_chart(fig_heat, use_container_width=True)
+            st.plotly_chart(fig_heat, width='stretch')
     # TAB 5: Export Options
     with tab5:
         st.subheader("Download Research Data")
@@ -262,7 +409,148 @@ def run_bird_dashboard(df):
         else:
             st.warning("Nothing to export.")
 
+    with tab6:
+        st.header("Site Health Metrics (PV Nature Methodology)")
+        st.info("These metrics follow the Hill Number framework to quantify ecosystem recovery.")
         
+        if not filtered_df.empty:
+            # Calculations
+            richness = calculate_pillar_1(filtered_df)
+            diversity = calculate_pillar_2(filtered_df)
+            dissimilarity = calculate_pillar_3_accurate(filtered_df)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Pillar 1: Richness ($q=0$)", f"{richness}")
+                st.caption("Total count of unique species detected.")
+                
+            with col2:
+                st.metric("Pillar 2: Diversity ($q=1$)", f"{diversity:.2f}")
+                st.caption("Effective species count (accounts for abundance evenness).")
+                
+            with col3:
+                st.metric("Pillar 3: Dissimilarity", f"{dissimilarity:.2f}")
+                st.caption("Site-level taxonomic distance (Within-group $\Delta^*$).")
+
+            # Visualizing the Pillars
+            pillar_df = pd.DataFrame({
+                "Pillar": ["Richness", "Diversity", "Dissimilarity"],
+                "Value": [richness, diversity, dissimilarity]
+            })
+            
+            fig_pillars = px.bar(
+                pillar_df, 
+                x="Pillar", 
+                y="Value", 
+                color="Pillar",
+                text_auto='.2f',
+                title="Biodiversity Pillar Comparison",
+                color_discrete_sequence=["#2E4A31", "#B07D70", "#D4A373"]
+            )
+            st.plotly_chart(fig_pillars, width='stretch')
+
+            with st.expander("Methodology Details"):
+                st.markdown(f"""
+                **Pillar 1 (Eq. 1):** Sum of unique species across target groups. Currently calculating for: *Birds*.
+                
+                **Pillar 2 (Eq. 2):** Hill number where $q=1$. 
+                $$P_2(t) = \sum_{{i=1}}^{{S}} (p_{{i,t}}^q)^{{\\frac{{1}}{{1-q}}}}$$
+                
+                **Pillar 3 (Eq. 4):** Measures taxonomic 'spread'. 
+                In this view, we focus on $\Delta^*$ (Within-group taxonomic dissimilarity).
+                """)
+            with st.expander("Taxonomy Details"):
+                # Create a display table of the fetched taxonomy
+                taxa_data = []
+                unique_sci = [s for s in filtered_df['scientific_name'].unique() if " " in str(s)]
+                for spec in unique_sci:
+                    info = fetch_bird_taxonomy(spec)
+                    if info:
+                        taxa_data.append({"Species": spec, **info})
+                
+                if taxa_data:
+                    st.table(pd.DataFrame(taxa_data))
+
+            st.subheader("Compare Two Species")
+    
+            # Create the species selection list from your data
+            all_detected = sorted(filtered_df['species'].unique())
+            
+            col_a, col_b = st.columns(2)
+            with col_a:
+                s1 = st.selectbox("Select Species 1", all_detected, key="comp1")
+            with col_b:
+                s2 = st.selectbox("Select Species 2", all_detected, key="comp2")
+            
+            dist_score = get_taxonomic_pair_distance(s1, s2)
+            
+            # Display the result
+            st.metric(f"Taxonomic Distance: {s1} vs {s2}", dist_score)
+            
+            if dist_score == 0:
+                st.success("These are the same species.")
+            elif dist_score <= 40:
+                st.info("These species are closely related (Same Genus or Family).")
+            else:
+                st.warning("These species are taxonomically distinct.")
+            st.divider()
+            st.subheader("🕸️ Site Taxonomic Landscape")
+            st.write("This heatmap visualizes the 'path length' between every detected species. "
+                "A high number (100) indicates species from different Orders, while a low number "
+                "indicates closely related species.")
+            with st.spinner("Analyzing taxonomic relationships..."):
+                heatmap_fig = create_taxonomic_heatmap(filtered_df)
+                if heatmap_fig:
+                    st.plotly_chart(heatmap_fig, width='stretch')
+                else:
+                    st.info("Not enough species detected to generate a relationship map.")
+        else:
+            st.warning("Please filter for at least one species to calculate metrics.")
+        
+@st.cache_data
+def fetch_bird_taxonomy(scientific_name):
+    """
+    Calls GBIF API to get the higher taxonomy for a bird's common name.
+    Returns a dictionary of ranks or None if not found.
+    """
+    try:
+        # Search the GBIF Backbone Taxonomy
+        # We specify 'Aves' (birds) to avoid matching with insects or plants with similar names
+        match = species_api.name_backbone(scientific_name, kingdom='Animalia', class_='Aves')
+        
+        taxa = {"genus": "Unknown", "family": "Unknown", "order": "Unknown"}
+
+        if 'classification' in match:
+            for item in match['classification']:
+                rank = item.get('rank')
+                name = item.get('name')
+                
+                if rank == 'GENUS':
+                    taxa['genus'] = name
+                elif rank == 'FAMILY':
+                    taxa['family'] = name
+                elif rank == 'ORDER':
+                    taxa['order'] = name
+        return taxa
+    
+    except TypeError as e:
+        # If the 'name' argument error persists, try a name_lookup instead
+        # as a fallback strategy
+        results = species_api.name_lookup(q=scientific_name, rank='species', kingdom='Animalia')
+        if results['results']:
+            top_match = results['results'][0]
+            return {
+                "genus": top_match.get("genus", "Unknown"),
+                "family": top_match.get("family", "Unknown"),
+                "order": top_match.get("order", "Unknown")
+            }
+    except Exception as e:
+        print(f"Taxonomy Error: {e}")
+    except Exception as e:
+        st.error(f"Error fetching taxonomy for {scientific_name}: {e}")
+    
+    return None
 
 @st.cache_resource
 def bird_model():
@@ -296,7 +584,7 @@ def run_bulk_analysis(files):
     if not df_detections.empty:
         df_detections['timestamp_str'] = df_detections['File'].apply(timest)
         df_detections['duration'] = df_detections['end_time'] -  df_detections['start_time']
-
+    print(df_detections.head)
     return df_detections
 
 @st.cache_data
@@ -317,8 +605,8 @@ if __name__ == "__main__":
 
     if folder_path and os.path.exists(folder_path):
         results_path = os.path.join(folder_path, 'birdnet_results.csv')
-        if os.path.exists(results_path) and st.session_state.df is None:
-            st.session_state.df = pd.read_csv(results_path)
+        # if os.path.exists(results_path) and st.session_state.df is None:
+        #     st.session_state.df = pd.read_csv(results_path)
         # Check if we should load the data
         if st.session_state.df is None:
             col1, col2 = st.columns(2)
@@ -335,6 +623,8 @@ if __name__ == "__main__":
                 if files:
                     df_results = run_bulk_analysis(files)
                     if not df_results.empty:
+                        if os.path.exists(results_path):
+                            os.remove(results_path)
                         df_results.to_csv(results_path, index=False)
                         st.session_state.df = df_results
                         st.rerun()
