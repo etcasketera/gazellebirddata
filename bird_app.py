@@ -170,26 +170,27 @@ st.markdown(f"""
         src: url(data:font/otf;base64,{font_data}) format('opentype');
     }}
 
-    /* Apply to everything */
-    html, body, [class*="css"], stApp, * {{
-        font-family: 'CompanyFont', sans-serif !important;
+    /* 1. Target the main app and specific text elements only */
+    /* This avoids the 'Universal Selector' (*) which breaks the icons */
+    .stApp, html, body, p, h1, h2, h3, span, .stMetric, .stTab {{
+        font-family: 'CompanyFont', sans-serif;
         color: #071B0B;
     }}
 
-    .stApp {{
-        background-color: #F7F7F1; 
+    /* 2. PROTECT THE CHEVRONS: Force system fonts for expander headers and icons */
+    /* Streamlit's icons are often SVGs or specific icon-font spans */
+    [data-testid="stExpander"] summary, 
+    [data-testid="stExpander"] svg,
+    [data-testid="stIcon"],
+    .st-emotion-cache-p966ps {{
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
     }}
 
-    [data-testid="stSidebar"] {{
-        background-color: #B07D70;
-        border-right: 1px solid #30363D;
-    }}
-    [data-testid="stExpander"] svg, 
-    [data-testid="stExpander"] [data-testid="stIcon"] {{
-        font-family: sans-serif !important;
-    }}
-    .st-emotion-cache-p966ps, .st-emotion-cache-1vt4y6f {{
-        font-family: 'Inter', sans-serif !important;
+    /* 3. Background and Sidebar Styling */
+    .stApp {{ background-color: #F7F7F1; }}
+    [data-testid="stSidebar"] {{ 
+        background-color: #B07D70; 
+        border-right: 1px solid #30363D; 
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -461,13 +462,15 @@ def run_bird_dashboard(df):
                 In this view, we focus on $\Delta^*$ (Within-group taxonomic dissimilarity).
                 """)
             with st.expander("Taxonomy Details"):
+                name_map = filtered_df.drop_duplicates('scientific_name').set_index('scientific_name')['species'].to_dict()
                 # Create a display table of the fetched taxonomy
                 taxa_data = []
                 unique_sci = [s for s in filtered_df['scientific_name'].unique() if " " in str(s)]
                 for spec in unique_sci:
                     info = fetch_bird_taxonomy(spec)
                     if info:
-                        taxa_data.append({"Species": spec, **info})
+                        common_name = name_map.get(spec, "Unknown")
+                        taxa_data.append({"Common Name": common_name, "Species": spec, **info})
                 
                 if taxa_data:
                     st.table(pd.DataFrame(taxa_data))
@@ -554,7 +557,14 @@ def fetch_bird_taxonomy(scientific_name):
 
 @st.cache_resource
 def bird_model():
-    return Analyzer()
+    model_path = resource_path(os.path.join("models", "audio-model.tflite"))
+    label_path = resource_path(os.path.join("models", "labels/en_us.txt"))
+    
+    # FIX: Change parameter names to 'classifier_model_path' and 'classifier_labels_path'
+    return Analyzer(
+        classifier_model_path=model_path, 
+        classifier_labels_path=label_path
+    )
 
 @st.cache_data
 def run_bulk_analysis(files):
