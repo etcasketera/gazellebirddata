@@ -34,10 +34,10 @@ A self-contained Streamlit web application designed for rapid prototyping, indiv
 ### Installation & Requirements
 
 * **Python 3.9+**
-* **FFmpeg**: Required for audio decoding.
+* **FFmpeg**: Required for audio decoding. `pip install -r packages.txt`
 
 
-* **Dependencies**: `pip install pandas streamlit plotly birdnetlib pygbif`.
+* **Dependencies**: `pip install -r requirements.txt`.
 
 
 * **Models**: BirdNET TFLite model and labels must be in the `/models` directory.
