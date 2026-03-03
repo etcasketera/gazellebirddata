@@ -8,14 +8,14 @@ BirdSight Analytics is a dual-modality data engineering project designed to auto
 
 ## Table of Contents
 
+* [Installation & Requirements] 
+
 1. [Option 1: Interactive Researcher Dashboard (`bird_app.py`)](#option-1-interactive-researcher-dashboard-bird_apppy)
-    * [Installation & Requirements](#installation--requirements)    
     * [How to Use](#how-to-use)
     * [What the Code is Doing](#what-the-code-is-doing)
 
 
 2. [Option 2: Production ETL & Power BI Pipeline (`bird_analysis.py`)](#option-2-production-etl--power-bi-pipeline-bird_analysispy)
-    * [Installation & Requirements](#installation--requirements-1)
     * [How to Use](#how-to-use-1)
     * [What the Code is Doing](#what-the-code-is-doing-1)
 
@@ -27,20 +27,31 @@ BirdSight Analytics is a dual-modality data engineering project designed to auto
 
 ---
 
+## Installation & Requirements
+
+This project assumes that you have already set up Python on your computer, such as through Anaconda or other distributions. I will be using anaconda as an example for this project.
+
+### Installation Requirements
+* **Create Conda Environemnt**
+```bash
+- `conda create --name your-env-name`
+- `conda activate your-env-name`
+```
+* **Install Dependencies**
+```bash
+- `pip3 install -r packages.txt`
+- 'pip3 install -r requirements.txt'
+```
+### File Requirements
+* **Models**: BirdNET TFLite model and labels must be in the `/models` directory.
+* **Taxonomy Master**: Requires `assets/taxonomy_master.csv` for high-speed local lookups.
+* **Power BI Desktop**: To open the `birdanalysis.pbix` template.
+
+---
+
 ## Option 1: Interactive Researcher Dashboard (`bird_app.py`)
 
 A self-contained Streamlit web application designed for rapid prototyping, individual file analysis, and visual exploration of taxonomic relationships.
-
-### Installation & Requirements
-
-* **Python 3.9+**
-* **FFmpeg**: Required for audio decoding. `pip install -r packages.txt`
-
-
-* **Dependencies**: `pip install -r requirements.txt`.
-
-
-* **Models**: BirdNET TFLite model and labels must be in the `/models` directory.
 
 
 
@@ -51,19 +62,10 @@ A self-contained Streamlit web application designed for rapid prototyping, indiv
 3. Use the sidebar to filter by confidence score or specific species.
 4. Explore the **Taxonomic Landscape Heatmap** to see distances between detected species.
 
-
-
 ### What the Code is Doing
-
 * **Dynamic Analysis**: Uses `birdnetlib` to analyze files and stores results in `st.session_state` to prevent data loss during filter changes.
-
-
 * **API Integration**: Originally used the **GBIF API** (`pygbif`) to fetch higher-level taxonomy (Order/Family) for species not in the local cache.
-
-
 * **Visualization**: Generates Plotly heatmaps to visualize the "path length" between species based on taxonomic distance weights.
-
-
 
 ---
 
@@ -71,28 +73,12 @@ A self-contained Streamlit web application designed for rapid prototyping, indiv
 
 A CLI-based engine built for high-volume batch processing and standardized reporting.
 
-### Installation & Requirements
-
-* **Standard Python Environment** or the bundled **.exe** (if distributed).
-* **Taxonomy Master**: Requires `assets/taxonomy_master.csv` for high-speed local lookups.
-
-
-* **Power BI Desktop**: To open the `birdanalysis.pbix` template.
-
-
-
 ### How to Use
 
 1. Run the script: `python bird_analysis.py`.
 2. Select the source folder via the GUI pop-up.
-
-
 3. The script outputs `bird_analysis_results.csv` into the source folder.
-
-
 4. Open the **Power BI Dashboard** and click "Refresh" to populate the templated reports with the new data.
-
-
 
 ### What the Code is Doing
 
