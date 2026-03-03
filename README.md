@@ -6,6 +6,36 @@ BirdSight Analytics is a dual-modality data engineering project designed to auto
 
 ---
 
+## Table of Contents
+
+* [Option 1: Interactive Researcher Dashboard (`bird_app.py`)](#option-1-interactive-researcher-dashboard-bird_apppy)
+* [Installation & Requirements](#installation--requirements)
+* [How to Use](#how-to-use)
+* [What the Code is Doing](#what-the-code-is-doing)
+
+
+* [Option 2: Production ETL & Power BI Pipeline (`bird_analysis.py`)](#option-2-production-etl--power-bi-pipeline-bird_analysispy)
+* [Installation & Requirements](#installation--requirements-1)
+* [How to Use](#how-to-use-1)
+* [What the Code is Doing](#what-the-code-is-doing-1)
+
+
+* [Scientific Metrics (The Three Pillars)](#scientific-metrics-the-three-pillars)
+* [Lessons Learned](#lessons-learned)
+* [Next Steps](#next-steps)
+* [Acknowledgements](#acknowledgements)
+
+---
+
+### Implementation Note
+
+To ensure the links work correctly, make sure your section headers in the README look like this:
+`## What is the Project?`
+Markdown automatically creates anchors by converting the text to lowercase and replacing spaces with hyphens (e.g., `#what-is-the-project`).
+
+**Would you like me to generate the full, final README file with this Table of Contents integrated so you can simply copy and paste it?**
+---
+
 ## Option 1: Interactive Researcher Dashboard (`bird_app.py`)
 
 A self-contained Streamlit web application designed for rapid prototyping, individual file analysis, and visual exploration of taxonomic relationships.
@@ -13,16 +43,13 @@ A self-contained Streamlit web application designed for rapid prototyping, indiv
 ### Installation & Requirements
 
 * **Python 3.9+**
-* 
-**FFmpeg**: Required for audio decoding.
+* **FFmpeg**: Required for audio decoding.
 
 
-* 
-**Dependencies**: `pip install pandas streamlit plotly birdnetlib pygbif`.
+* **Dependencies**: `pip install pandas streamlit plotly birdnetlib pygbif`.
 
 
-* 
-**Models**: BirdNET TFLite model and labels must be in the `/models` directory.
+* **Models**: BirdNET TFLite model and labels must be in the `/models` directory.
 
 
 
