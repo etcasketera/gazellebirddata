@@ -39,7 +39,6 @@ This project assumes that you have already set up Python on your computer, such 
 ```
 * **Install Dependencies**
 ```bash
-- `pip3 install -r packages.txt`
 - 'pip3 install -r requirements.txt'
 ```
 ### File Requirements

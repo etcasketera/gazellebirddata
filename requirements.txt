@@ -5,7 +5,5 @@ birdnet
 birdnetlib
 librosa
 numpy
-io
-os
-base64
 pygbif
+ffmpeg
