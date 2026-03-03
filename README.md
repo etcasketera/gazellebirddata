@@ -34,12 +34,12 @@ This project assumes that you have already set up Python on your computer, such 
 ### Installation Requirements
 * **Create Conda Environemnt**
 ```bash
-- `conda create --name your-env-name`
-- `conda activate your-env-name`
+`conda create --name your-env-name`
+`conda activate your-env-name`
 ```
 * **Install Dependencies**
 ```bash
-- 'pip3 install -r requirements.txt'
+`pip3 install -r requirements.txt`
 ```
 ### File Requirements
 * **Models**: BirdNET TFLite model and labels must be in the `/models` directory.
