@@ -160,7 +160,6 @@ The project utilizes the **Hill Number framework** to quantify ecosystem health 
 This project is built upon the incredible work of the open-source conservation and data science communities:
 
 * **BirdNET & BirdNET-Analyzer**: For the machine learning models and signal processing capabilities that drive the detection engine.
-* **Birdnetlib**: For the Python interface that enables scalable batch processing.
 * **Streamlit**: For providing the framework that powered the initial interactive prototype and dashboard.
 * **GBIF (Global Biodiversity Information Facility)**: For the `pygbif` Python client and access to the world’s taxonomic backbone.
 * **eBird / Clements Checklist**: For providing the foundational taxonomic records and checklists used to build the local taxonomy master files.
