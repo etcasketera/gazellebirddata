@@ -37,16 +37,13 @@ A self-contained Streamlit web application designed for rapid prototyping, indiv
 
 ### What the Code is Doing
 
-* 
-**Dynamic Analysis**: Uses `birdnetlib` to analyze files and stores results in `st.session_state` to prevent data loss during filter changes.
+* **Dynamic Analysis**: Uses `birdnetlib` to analyze files and stores results in `st.session_state` to prevent data loss during filter changes.
 
 
-* 
-**API Integration**: Originally used the **GBIF API** (`pygbif`) to fetch higher-level taxonomy (Order/Family) for species not in the local cache.
+* **API Integration**: Originally used the **GBIF API** (`pygbif`) to fetch higher-level taxonomy (Order/Family) for species not in the local cache.
 
 
-* 
-**Visualization**: Generates Plotly heatmaps to visualize the "path length" between species based on taxonomic distance weights.
+* **Visualization**: Generates Plotly heatmaps to visualize the "path length" between species based on taxonomic distance weights.
 
 
 
@@ -59,12 +56,10 @@ A CLI-based engine built for high-volume batch processing and standardized repor
 ### Installation & Requirements
 
 * **Standard Python Environment** or the bundled **.exe** (if distributed).
-* 
-**Taxonomy Master**: Requires `assets/taxonomy_master.csv` for high-speed local lookups.
+* **Taxonomy Master**: Requires `assets/taxonomy_master.csv` for high-speed local lookups.
 
 
-* 
-**Power BI Desktop**: To open the `birdanalysis.pbix` template.
+* **Power BI Desktop**: To open the `birdanalysis.pbix` template.
 
 
 
@@ -83,16 +78,13 @@ A CLI-based engine built for high-volume batch processing and standardized repor
 
 ### What the Code is Doing
 
-* 
-**Optimized ETL**: Replaces slow API calls with a local dictionary lookup (`tax_dict`) to map species to their Genus, Family, and Order instantly.
+* **Optimized ETL**: Replaces slow API calls with a local dictionary lookup (`tax_dict`) to map species to their Genus, Family, and Order instantly.
 
 
-* 
-**Time-Series Extraction**: Parses AudioMoth filenames (e.g., `20240101_120000.WAV`) to create a `Datetime` object for Power BI Time Intelligence.
+* **Time-Series Extraction**: Parses AudioMoth filenames (e.g., `20240101_120000.WAV`) to create a `Datetime` object for Power BI Time Intelligence.
 
 
-* 
-**Resource Pathing**: Uses a `resource_path` helper to ensure the script can find assets even when bundled as a standalone executable.
+* **Resource Pathing**: Uses a `resource_path` helper to ensure the script can find assets even when bundled as a standalone executable.
 
 
 
@@ -112,8 +104,7 @@ The project utilizes the **Hill Number framework** to quantify ecosystem health 
 * **Logic**: We assign a "path length" (distance) between species. Same genus = 20, same family = 40, same order = 60, different order = 100.
 
 
-* 
-**Reasoning**: A healthy ecosystem supports a wide variety of life across different taxonomic groups, not just many species within a single group.
+* **Reasoning**: A healthy ecosystem supports a wide variety of life across different taxonomic groups, not just many species within a single group.
 
 
 
@@ -123,16 +114,13 @@ The project utilizes the **Hill Number framework** to quantify ecosystem health 
 
 ## Lessons Learned
 
-* 
-**API vs. Local Storage**: Moving from GBIF API calls to a local CSV drastically reduced latency and made the tool viable for field use.
+* **API vs. Local Storage**: Moving from GBIF API calls to a local CSV drastically reduced latency and made the tool viable for field use.
 
 
-* 
-**UI Flexibility**: Power BI is significantly more fluid for creating complex filters and shareable reports than a locally-hosted Streamlit dashboard.
+* **UI Flexibility**: Power BI is significantly more fluid for creating complex filters and shareable reports than a locally-hosted Streamlit dashboard.
 
 
-* 
-**Architecture**: Designing for the "eventual .exe" early on (using `sys._MEIPASS`) is critical for tools meant for non-technical stakeholders.
+* **Architecture**: Designing for the "eventual .exe" early on (using `sys._MEIPASS`) is critical for tools meant for non-technical stakeholders.
 
 
 
@@ -140,16 +128,13 @@ The project utilizes the **Hill Number framework** to quantify ecosystem health 
 
 ## Next Steps
 
-* 
-**Full BirdNET Integration**: Implementing the complete BirdNET model for more robust batch processing and higher detection accuracy.
+* **Full BirdNET Integration**: Implementing the complete BirdNET model for more robust batch processing and higher detection accuracy.
 
 
-* 
-**Standalone Distribution**: Finalizing the conversion of `bird_analysis.py` into a distributable `.exe` via PyInstaller.
+* **Standalone Distribution**: Finalizing the conversion of `bird_analysis.py` into a distributable `.exe` via PyInstaller.
 
 
-* 
-**Cloud Scalability**: Transitioning to cloud storage and computing to allow Gazelle Ecosolutions teams to access data and processing power globally.
+* **Cloud Scalability**: Transitioning to cloud storage and computing to allow Gazelle Ecosolutions teams to access data and processing power globally.
 
 
 ## Acknowledgements
