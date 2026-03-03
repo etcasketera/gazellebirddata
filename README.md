@@ -8,16 +8,16 @@ BirdSight Analytics is a dual-modality data engineering project designed to auto
 
 ## Table of Contents
 
-* [Option 1: Interactive Researcher Dashboard (`bird_app.py`)](#option-1-interactive-researcher-dashboard-bird_apppy)
-* [Installation & Requirements](#installation--requirements)
-* [How to Use](#how-to-use)
-* [What the Code is Doing](#what-the-code-is-doing)
+1. [Option 1: Interactive Researcher Dashboard (`bird_app.py`)](#option-1-interactive-researcher-dashboard-bird_apppy)
+    * [Installation & Requirements](#installation--requirements)    
+    * [How to Use](#how-to-use)
+    * [What the Code is Doing](#what-the-code-is-doing)
 
 
-* [Option 2: Production ETL & Power BI Pipeline (`bird_analysis.py`)](#option-2-production-etl--power-bi-pipeline-bird_analysispy)
-* [Installation & Requirements](#installation--requirements-1)
-* [How to Use](#how-to-use-1)
-* [What the Code is Doing](#what-the-code-is-doing-1)
+2. [Option 2: Production ETL & Power BI Pipeline (`bird_analysis.py`)](#option-2-production-etl--power-bi-pipeline-bird_analysispy)
+    * [Installation & Requirements](#installation--requirements-1)
+    * [How to Use](#how-to-use-1)
+    * [What the Code is Doing](#what-the-code-is-doing-1)
 
 
 * [Scientific Metrics (The Three Pillars)](#scientific-metrics-the-three-pillars)
