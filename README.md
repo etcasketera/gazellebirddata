@@ -34,12 +34,12 @@ This project assumes that you have already set up Python on your computer, such 
 ### Installation Requirements
 * **Create Conda Environemnt**
 ```bash
-`conda create --name your-env-name`
-`conda activate your-env-name`
+conda create --name your-env-name
+conda activate your-env-name
 ```
 * **Install Dependencies**
 ```bash
-`pip3 install -r requirements.txt`
+pip3 install -r requirements.txt
 ```
 ### File Requirements
 * **Models**: BirdNET TFLite model and labels must be in the `/models` directory.
@@ -56,7 +56,7 @@ A self-contained Streamlit web application designed for rapid prototyping, indiv
 
 1. Run the app: 
 ```bash
-`streamlit run bird_app.py`
+streamlit run bird_app.py
 ```
 2. Enter the local path to your audio folder. You can find this by going to the audio folder and right-clicking on the name, then selecting "Copy as path".
 3. Use the sidebar to filter by confidence score or specific species.
@@ -77,7 +77,7 @@ A CLI-based engine built for high-volume batch processing and standardized repor
 
 1. Run the script: 
 ```bash
-`python bird_analysis.py`
+python bird_analysis.py
 ```
 2. Select the source folder via the GUI pop-up.
 3. The script outputs `bird_analysis_results.csv` into the source folder.
