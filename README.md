@@ -27,15 +27,6 @@ BirdSight Analytics is a dual-modality data engineering project designed to auto
 
 ---
 
-### Implementation Note
-
-To ensure the links work correctly, make sure your section headers in the README look like this:
-`## What is the Project?`
-Markdown automatically creates anchors by converting the text to lowercase and replacing spaces with hyphens (e.g., `#what-is-the-project`).
-
-**Would you like me to generate the full, final README file with this Table of Contents integrated so you can simply copy and paste it?**
----
-
 ## Option 1: Interactive Researcher Dashboard (`bird_app.py`)
 
 A self-contained Streamlit web application designed for rapid prototyping, individual file analysis, and visual exploration of taxonomic relationships.
